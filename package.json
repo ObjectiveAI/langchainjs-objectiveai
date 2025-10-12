@@ -10,7 +10,7 @@
   "types": "./index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git@github.com:ObjectiveAI/langchainjs-objectiveai.git"
+    "url": "https://github.com/ObjectiveAI/langchainjs-objectiveai.git"
   },
   "homepage": "https://github.com/ObjectiveAI/langchainjs-objectiveai",
   "scripts": {
