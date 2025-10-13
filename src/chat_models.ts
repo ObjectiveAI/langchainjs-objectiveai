@@ -443,9 +443,6 @@ export class QueryObjectiveAI extends BaseChatModel<
       chat_completion_create_params: baseChatCompletionCreateParams,
       openai: openaiOptions,
     } = this.invocationParams(options);
-    if (options.timeout !== undefined) {
-      openaiOptions.timeout = options.timeout;
-    }
     const openai = new OpenAI(openaiOptions);
     const chatCompletionCreateParams: Query.Completions.Request.ChatCompletionCreateParamsNonStreaming =
       {
