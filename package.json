@@ -34,7 +34,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "objectiveai": "1.0.0",
+    "objectiveai": "1.0.1",
     "openai": "5.12.2"
   },
   "peerDependencies": {
