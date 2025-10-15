@@ -1,6 +1,6 @@
 {
   "name": "@objectiveai/langchain",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Objective AI integrations for LangChain.js",
   "type": "module",
   "engines": {
