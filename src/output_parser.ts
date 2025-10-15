@@ -1,3 +1,4 @@
+import { Serializable } from "@langchain/core/load/serializable";
 import {
   BaseOutputParser,
   StructuredOutputParser,
@@ -109,6 +110,34 @@ export class QueryObjectiveAIJsonSchemaOutputParser<
     const { confidence, response: rawResponse } =
       parseObjectiveAIResponse(text);
     const response = await this.structuredParser.parse(rawResponse);
+    return { confidence, response };
+  }
+
+  getFormatInstructions(): string {
+    return "";
+  }
+}
+
+export class QueryObjectiveAICustomOutputParser<T> extends BaseOutputParser<
+  QueryObjectiveAIOutput<T>
+> {
+  parseFunction: (text: string) => Promise<T>;
+
+  constructor(
+    parseFunction: (text: string) => Promise<T>,
+    kwargs?: ConstructorParameters<typeof Serializable>[0],
+    ..._args: never[]
+  ) {
+    super(kwargs, ..._args);
+    this.parseFunction = parseFunction;
+  }
+
+  lc_namespace = ["langchain", "output_parsers", "objectiveai"];
+
+  async parse(text: string): Promise<QueryObjectiveAIOutput<T>> {
+    const { confidence, response: rawResponse } =
+      parseObjectiveAIResponse(text);
+    const response = await this.parseFunction(rawResponse);
     return { confidence, response };
   }
 
