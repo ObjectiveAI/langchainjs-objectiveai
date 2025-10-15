@@ -39,7 +39,117 @@ export interface BaseQueryModelParams extends BaseChatModelParams {
   openai: ClientOptions;
 }
 
-export function baseMessageToChatCompletionRequestMessage(
+// TODO: support tools
+export class QueryObjectiveAI extends BaseChatModel<
+  QueryOptions,
+  AIMessageChunk
+> {
+  chat_completion_create_params: Omit<
+    Query.Completions.Request.ChatCompletionCreateParamsNonStreaming,
+    "messages"
+  >;
+  openai: ClientOptions;
+
+  constructor(fields: BaseQueryModelParams) {
+    super(fields);
+    this.chat_completion_create_params = fields.chat_completion_create_params;
+    this.openai = fields.openai;
+  }
+
+  _llmType() {
+    return "objectiveai";
+  }
+
+  override invocationParams(_options?: this["ParsedCallOptions"]): {
+    chat_completion_create_params: Omit<
+      Query.Completions.Request.ChatCompletionCreateParamsNonStreaming,
+      "messages"
+    >;
+    openai: ClientOptions;
+  } {
+    // use params from constructor as base
+    const chat_completion_create_params = {
+      ...this.chat_completion_create_params,
+    };
+    // override with params from call, except for undefined values
+    // to delete params from the base, pass in null
+    if (_options?.chat_completion_create_params) {
+      for (const [key, value] of Object.entries(
+        _options.chat_completion_create_params
+      )) {
+        if (value !== undefined) {
+          (chat_completion_create_params as Record<string, unknown>)[key] =
+            value;
+        }
+      }
+    }
+    // override with disableStreaming
+    if (this.disableStreaming) {
+      chat_completion_create_params.stream = false;
+      chat_completion_create_params.stream_options = undefined;
+    }
+    return {
+      chat_completion_create_params,
+      openai: this.openai,
+    };
+  }
+
+  async _generate(
+    messages: BaseMessage[],
+    options: this["ParsedCallOptions"],
+    _runManager?: CallbackManagerForLLMRun
+  ): Promise<ChatResult> {
+    const {
+      chat_completion_create_params: baseChatCompletionCreateParams,
+      openai: openaiOptions,
+    } = this.invocationParams(options);
+    const openai = new OpenAI(openaiOptions);
+    const chatCompletionCreateParams: Query.Completions.Request.ChatCompletionCreateParamsNonStreaming =
+      {
+        ...baseChatCompletionCreateParams,
+        messages: messages.map(baseMessageToChatCompletionRequestMessage),
+        stream: false,
+      };
+    const completion = await Query.Completions.create(
+      openai,
+      chatCompletionCreateParams,
+      {
+        ...(options?.timeout !== undefined ? { timeout: options.timeout } : {}),
+        ...(options?.signal !== undefined ? { signal: options.signal } : {}),
+      }
+    );
+    const baseMessage = queryCompletionResponseToBaseMessage(completion);
+    return {
+      generations: [
+        {
+          message: baseMessage,
+          text: baseMessage.content as string,
+          generationInfo: {
+            id: completion.id,
+            choices_count: completion.choices.length,
+            created: completion.created,
+            model: completion.model,
+            object: completion.object,
+            service_tier: completion.service_tier,
+            system_fingerprint: completion.system_fingerprint,
+          },
+        },
+      ],
+      llmOutput: {
+        tokenUsage: completion.usage
+          ? {
+              promptTokens: completion.usage.prompt_tokens,
+              completionTokens: completion.usage.completion_tokens,
+              totalTokens: completion.usage.total_tokens,
+              cost: completion.usage.cost,
+            }
+          : undefined,
+      },
+    };
+  }
+}
+
+function baseMessageToChatCompletionRequestMessage(
   message: BaseMessage
 ): Chat.Completions.Request.Message {
   function getMessageTypeOrRole(message: BaseMessage): string {
@@ -279,7 +389,7 @@ export function baseMessageToChatCompletionRequestMessage(
   }
 }
 
-export function queryCompletionResponseToBaseMessage(
+function queryCompletionResponseToBaseMessage(
   completion: Query.Completions.Response.Unary.ChatCompletion
 ): AIMessage {
   function chatCompletionResponseMessageToBaseMessageToolCalls(
@@ -377,114 +487,4 @@ export function queryCompletionResponseToBaseMessage(
         }
       : undefined,
   });
-}
-
-// TODO: support tools
-export class QueryObjectiveAI extends BaseChatModel<
-  QueryOptions,
-  AIMessageChunk
-> {
-  chat_completion_create_params: Omit<
-    Query.Completions.Request.ChatCompletionCreateParamsNonStreaming,
-    "messages"
-  >;
-  openai: ClientOptions;
-
-  constructor(fields: BaseQueryModelParams) {
-    super(fields);
-    this.chat_completion_create_params = fields.chat_completion_create_params;
-    this.openai = fields.openai;
-  }
-
-  _llmType() {
-    return "objectiveai";
-  }
-
-  override invocationParams(_options?: this["ParsedCallOptions"]): {
-    chat_completion_create_params: Omit<
-      Query.Completions.Request.ChatCompletionCreateParamsNonStreaming,
-      "messages"
-    >;
-    openai: ClientOptions;
-  } {
-    // use params from constructor as base
-    const chat_completion_create_params = {
-      ...this.chat_completion_create_params,
-    };
-    // override with params from call, except for undefined values
-    // to delete params from the base, pass in null
-    if (_options?.chat_completion_create_params) {
-      for (const [key, value] of Object.entries(
-        _options.chat_completion_create_params
-      )) {
-        if (value !== undefined) {
-          (chat_completion_create_params as Record<string, unknown>)[key] =
-            value;
-        }
-      }
-    }
-    // override with disableStreaming
-    if (this.disableStreaming) {
-      chat_completion_create_params.stream = false;
-      chat_completion_create_params.stream_options = undefined;
-    }
-    return {
-      chat_completion_create_params,
-      openai: this.openai,
-    };
-  }
-
-  async _generate(
-    messages: BaseMessage[],
-    options: this["ParsedCallOptions"],
-    _runManager?: CallbackManagerForLLMRun
-  ): Promise<ChatResult> {
-    const {
-      chat_completion_create_params: baseChatCompletionCreateParams,
-      openai: openaiOptions,
-    } = this.invocationParams(options);
-    const openai = new OpenAI(openaiOptions);
-    const chatCompletionCreateParams: Query.Completions.Request.ChatCompletionCreateParamsNonStreaming =
-      {
-        ...baseChatCompletionCreateParams,
-        messages: messages.map(baseMessageToChatCompletionRequestMessage),
-        stream: false,
-      };
-    const completion = await Query.Completions.create(
-      openai,
-      chatCompletionCreateParams,
-      {
-        ...(options?.timeout !== undefined ? { timeout: options.timeout } : {}),
-        ...(options?.signal !== undefined ? { signal: options.signal } : {}),
-      }
-    );
-    const baseMessage = queryCompletionResponseToBaseMessage(completion);
-    return {
-      generations: [
-        {
-          message: baseMessage,
-          text: baseMessage.content as string,
-          generationInfo: {
-            id: completion.id,
-            choices_count: completion.choices.length,
-            created: completion.created,
-            model: completion.model,
-            object: completion.object,
-            service_tier: completion.service_tier,
-            system_fingerprint: completion.system_fingerprint,
-          },
-        },
-      ],
-      llmOutput: {
-        tokenUsage: completion.usage
-          ? {
-              promptTokens: completion.usage.prompt_tokens,
-              completionTokens: completion.usage.completion_tokens,
-              totalTokens: completion.usage.total_tokens,
-              cost: completion.usage.cost,
-            }
-          : undefined,
-      },
-    };
-  }
 }
