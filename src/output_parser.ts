@@ -66,14 +66,12 @@ export class QueryObjectiveAITextOutputParser extends BaseOutputParser<
 export class QueryObjectiveAIJsonObjectOutputParser extends BaseOutputParser<
   QueryObjectiveAIOutput<Record<string, unknown>>
 > {
-  structuredParser: StructuredOutputParser<
-    z.ZodRecord<z.ZodString, z.ZodUnknown>
-  >;
+  structuredParser: StructuredOutputParser<any>;
 
   constructor() {
-    const schema = z.record(z.string(), z.unknown());
+    const schema: z.ZodSchema<Record<string, unknown>> = z.record(z.unknown());
     super(schema);
-    this.structuredParser = new StructuredOutputParser(schema);
+    this.structuredParser = new StructuredOutputParser(schema as any);
   }
 
   lc_namespace = ["langchain", "output_parsers", "objectiveai"];
@@ -83,7 +81,10 @@ export class QueryObjectiveAIJsonObjectOutputParser extends BaseOutputParser<
   ): Promise<QueryObjectiveAIOutput<Record<string, unknown>>> {
     const { confidence, response: rawResponse } =
       parseObjectiveAIResponse(text);
-    const response = await this.structuredParser.parse(rawResponse);
+    const response = (await this.structuredParser.parse(rawResponse)) as Record<
+      string,
+      unknown
+    >;
     return { confidence, response };
   }
 
