@@ -11,7 +11,7 @@ import { z } from "zod";
 
 export interface QueryObjectiveAIOutput<T> {
   confidence: number;
-  response: T;
+  output: T;
 }
 
 function throwNotObjectiveAIResponseError(): never {
@@ -32,14 +32,14 @@ function parseObjectiveAIResponse(
   if (
     typeof parsed === "object" &&
     parsed !== null &&
-    "response" in parsed &&
-    typeof parsed.response === "string" &&
+    "output" in parsed &&
+    typeof parsed.output === "string" &&
     "confidence" in parsed &&
     typeof parsed.confidence === "number" &&
     parsed.confidence >= 0 &&
     parsed.confidence <= 1
   ) {
-    return { confidence: parsed.confidence, response: parsed.response };
+    return { confidence: parsed.confidence, output: parsed.output };
   } else {
     throwNotObjectiveAIResponseError();
   }
@@ -79,13 +79,12 @@ export class QueryObjectiveAIJsonObjectOutputParser extends BaseOutputParser<
   async parse(
     text: string
   ): Promise<QueryObjectiveAIOutput<Record<string, unknown>>> {
-    const { confidence, response: rawResponse } =
-      parseObjectiveAIResponse(text);
-    const response = (await this.structuredParser.parse(rawResponse)) as Record<
+    const { confidence, output: rawOutput } = parseObjectiveAIResponse(text);
+    const output = (await this.structuredParser.parse(rawOutput)) as Record<
       string,
       unknown
     >;
-    return { confidence, response };
+    return { confidence, output };
   }
 
   getFormatInstructions(): string {
@@ -108,10 +107,9 @@ export class QueryObjectiveAIJsonSchemaOutputParser<
   async parse(
     text: string
   ): Promise<QueryObjectiveAIOutput<InferInteropZodOutput<T>>> {
-    const { confidence, response: rawResponse } =
-      parseObjectiveAIResponse(text);
-    const response = await this.structuredParser.parse(rawResponse);
-    return { confidence, response };
+    const { confidence, output: rawOutput } = parseObjectiveAIResponse(text);
+    const output = await this.structuredParser.parse(rawOutput);
+    return { confidence, output };
   }
 
   getFormatInstructions(): string {
@@ -136,10 +134,9 @@ export class QueryObjectiveAICustomOutputParser<T> extends BaseOutputParser<
   lc_namespace = ["langchain", "output_parsers", "objectiveai"];
 
   async parse(text: string): Promise<QueryObjectiveAIOutput<T>> {
-    const { confidence, response: rawResponse } =
-      parseObjectiveAIResponse(text);
-    const response = await this.parseFunction(rawResponse);
-    return { confidence, response };
+    const { confidence, output: rawOutput } = parseObjectiveAIResponse(text);
+    const output = await this.parseFunction(rawOutput);
+    return { confidence, output };
   }
 
   getFormatInstructions(): string {

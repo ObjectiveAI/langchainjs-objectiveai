@@ -435,7 +435,7 @@ function queryCompletionResponseToBaseMessage(
   return new AIMessage({
     content: JSON.stringify({
       confidence: choice?.confidence ?? 0,
-      response: choice?.message.content ?? "",
+      output: choice?.message.content ?? "",
     }),
     tool_calls,
     invalid_tool_calls,
