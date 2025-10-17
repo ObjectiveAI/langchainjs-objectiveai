@@ -20,6 +20,7 @@ import { ToolCall } from "@langchain/core/messages/tool";
 import { ChatResult } from "@langchain/core/outputs";
 import { Chat, Query } from "objectiveai";
 import { type ClientOptions, OpenAI } from "openai";
+import { QueryObjectiveAIOutput } from "./output_parser";
 
 // langchain only allows 1 choice, so we must do non-streaming
 // so as to put the highest confidence choice first
@@ -427,16 +428,27 @@ function queryCompletionResponseToBaseMessage(
         invalid_tool_calls.length > 0 ? invalid_tool_calls : undefined,
     };
   }
+
+  // use winning choice for tool_calls and metadata
   const choice: Query.Completions.Response.Unary.Choice | undefined =
     completion.choices[0];
   const { tool_calls, invalid_tool_calls } = choice
     ? chatCompletionResponseMessageToBaseMessageToolCalls(choice.message)
     : {};
+
+  // return each "generate" choice, including confidence and content
+  const content: QueryObjectiveAIOutput<string>[] = [];
+  for (const c of completion.choices) {
+    if (c.generate_id && c.confidence !== null) {
+      content.push({
+        confidence: c.confidence,
+        output: c.message.content ?? "",
+      });
+    }
+  }
+
   return new AIMessage({
-    content: JSON.stringify({
-      confidence: choice?.confidence ?? 0,
-      output: choice?.message.content ?? "",
-    }),
+    content: JSON.stringify(content),
     tool_calls,
     invalid_tool_calls,
     id: completion.id,
