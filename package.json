@@ -1,6 +1,6 @@
 {
   "name": "@objectiveai/langchain",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Objective AI integrations for LangChain.js",
   "type": "module",
   "engines": {
@@ -34,7 +34,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "objectiveai": "1.0.2",
+    "objectiveai": "1.0.3",
     "openai": "5.12.2",
     "zod": "^3.25.32"
   },

@@ -1181,7 +1181,7 @@ __metadata:
     eslint-plugin-prettier: ^4.2.1
     jest: ^29.5.0
     jest-environment-node: ^29.6.4
-    objectiveai: 1.0.1
+    objectiveai: 1.0.3
     openai: 5.12.2
     prettier: ^2.8.3
     release-it: ^18.1.2
@@ -6208,10 +6208,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"objectiveai@npm:1.0.1":
-  version: 1.0.1
-  resolution: "objectiveai@npm:1.0.1"
-  checksum: 3c7732fd74d35ffb451adc7f01dca66df3eb2c288fd4d3d3a5985b4e723cc36ecefb83efe5e3c526703d2518c2a33f5118d44aaa4d2a315eea46642efc894b45
+"objectiveai@npm:1.0.3":
+  version: 1.0.3
+  resolution: "objectiveai@npm:1.0.3"
+  checksum: 958cc6f86872be75dde7fe429cd483a67b93e2558327a05f7f08514b356f17c6a4f1fb0aca0423c2a818842880846a3e483388f61ce9826ea6da2783c20eafbb
   languageName: node
   linkType: hard
 
